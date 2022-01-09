@@ -5,14 +5,19 @@ const cors = require('cors');
 class Server{
 
    constructor(){
-      this.app = express();
-      this.port = process.env.PORT;
+      this.app    = express();
+      this.port   = process.env.PORT;
+      this.server = require('http').createServer(this.app);
+      this.io     = require('socket.io')(this.server);
 
       //middlewares
       this.middlewares();
 
       //Rutas
       this.routes();
+
+      //Sockets
+      this.sockets();
    }
 
    middlewares(){
@@ -34,8 +39,22 @@ class Server{
       // this.app.use('/api/uploads', require('../routes/uploads'));
    }
 
+   sockets(){
+      this.io.on('connection', socket => {
+         socket.on('disconnect', ()=>{
+            console.log('Cliente desconectado', socket.id);
+         });
+         
+         socket.on('enviarmensaje', (payload)=>{
+            // console.log(payload);
+            this.io.emit('enviarmensaje', payload);
+         });
+      });
+   }
+
+
    listen(){
-      this.app.listen(this.port, ()=>{
+      this.server.listen(this.port, ()=>{
          console.log('Servidor corriendo en el puerto', this.port);
       });
    }
